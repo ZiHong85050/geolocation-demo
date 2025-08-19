@@ -10,11 +10,6 @@
   <p id="output"></p>
 
   <script>
-    // Auto-run on page load
-    window.onload = function () {
-      getLocation();
-    };
-
     function getLocation() {
       const status = document.getElementById("status");
       const output = document.getElementById("output");
@@ -49,27 +44,9 @@
           });
           */
         },
-        // ❌ Error
+        // ❌ Error → refresh page immediately (all cases)
         (error) => {
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              status.innerHTML = `
-                ❌ Permission denied.<br>
-                👉 <strong>How to enable location:</strong><br>
-                - On <b>Android</b>: Go to Settings → Apps → Your Browser → Permissions → Allow Location<br>
-                - On <b>iOS (Safari)</b>: Settings → Safari → Location → Allow<br>
-              `;
-              break;
-            case error.POSITION_UNAVAILABLE:
-              status.textContent = "⚠️ Location information is unavailable.";
-              break;
-            case error.TIMEOUT:
-              status.textContent = "⏳ The request timed out. Please reload.";
-              break;
-            default:
-              status.textContent = "❓ An unknown error occurred.";
-              break;
-          }
+          location.reload();
         },
         {
           enableHighAccuracy: true,
@@ -78,6 +55,9 @@
         }
       );
     }
+
+    // Auto-run on page load
+    window.onload = getLocation;
   </script>
 </body>
 </html>
