@@ -2,63 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Get User Location</title>
+  <title>Driver Location Capture</title>
 </head>
 <body>
-  <h2>User Location</h2>
-  <button onclick="getLocation()">Get My Location</button>
+  <h2>Retrieving Location...</h2>
   <p id="status"></p>
   <p id="output"></p>
 
   <script>
+    // Auto-run on page load
+    window.onload = function () {
+      getLocation();
+    };
+
     function getLocation() {
       const status = document.getElementById("status");
       const output = document.getElementById("output");
 
-      // Check if browser supports geolocation
       if (!navigator.geolocation) {
-        status.textContent = "Geolocation is not supported by this browser.";
+        status.textContent = "❌ Geolocation is not supported by this browser.";
         return;
       }
 
-      status.textContent = "Locating…";
+      status.textContent = "📡 Requesting your location...";
 
       navigator.geolocation.getCurrentPosition(
-        // ✅ Success callback
+        // ✅ Success
         (position) => {
           const lat = position.coords.latitude.toFixed(6);
           const lon = position.coords.longitude.toFixed(6);
           const accuracy = position.coords.accuracy;
 
-          status.textContent = "Location retrieved successfully!";
+          status.textContent = "✅ Location retrieved!";
           output.innerHTML = `
             <strong>Latitude:</strong> ${lat} <br>
             <strong>Longitude:</strong> ${lon} <br>
             <strong>Accuracy:</strong> ±${accuracy} meters
           `;
+
+          // 🚀 Example: send to server (uncomment & replace URL)
+          /*
+          fetch("https://your-server.com/update-location", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ latitude: lat, longitude: lon, accuracy: accuracy })
+          });
+          */
         },
-        // ❌ Error callback
+        // ❌ Error
         (error) => {
-          switch(error.code) {
+          switch (error.code) {
             case error.PERMISSION_DENIED:
-              status.textContent = "User denied the request for Geolocation.";
+              status.innerHTML = `
+                ❌ Permission denied.<br>
+                👉 <strong>How to enable location:</strong><br>
+                - On <b>Android</b>: Go to Settings → Apps → Your Browser → Permissions → Allow Location<br>
+                - On <b>iOS (Safari)</b>: Settings → Safari → Location → Allow<br>
+              `;
               break;
             case error.POSITION_UNAVAILABLE:
-              status.textContent = "Location information is unavailable.";
+              status.textContent = "⚠️ Location information is unavailable.";
               break;
             case error.TIMEOUT:
-              status.textContent = "The request to get user location timed out.";
+              status.textContent = "⏳ The request timed out. Please reload.";
               break;
             default:
-              status.textContent = "An unknown error occurred.";
+              status.textContent = "❓ An unknown error occurred.";
               break;
           }
         },
-        // ⚙️ Options (try to improve accuracy)
         {
-          enableHighAccuracy: true,  // request GPS if available
-          timeout: 10000,            // max wait 10 sec
-          maximumAge: 0              // no cached position
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     }
