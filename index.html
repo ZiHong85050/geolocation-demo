@@ -2,12 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Driver Location Capture</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 0 1rem; /* ✅ always some side padding */
+      box-sizing: border-box;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 480px;   /* keeps it nice on desktop */
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 1rem;
+      color: #333;
+      font-size: 2rem; /* desktop */
+    }
+    #status {
+      font-weight: bold;
+      margin: 1rem 0;
+      font-size: 1.3rem;
+      line-height: 1.6;
+    }
+    #output {
+      background: #f9f9f9;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      line-height: 1.6;
+    }
+    .error { color: #d9534f; }
+    .success { color: #28a745; }
+    .loading { color: #007bff; }
+
+    /* 📱 Tablet & landscape phones */
+    @media (max-width: 768px) {
+      h2 { font-size: 2.3rem; }
+      #status { font-size: 1.5rem; }
+      #output { font-size: 1.4rem; }
+    }
+
+    /* 📱 Small portrait phones (< 480px) */
+    @media (max-width: 480px) {
+      h2 { font-size: 2.4rem; }
+      #status { font-size: 1.8rem; }
+      #output { font-size: 1.6rem; }
+      .container {
+        padding: 2rem 1.5rem;  /* ✅ extra side padding */
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>Retrieving Location...</h2>
-  <p id="status"></p>
-  <p id="output"></p>
+  <div class="container">
+    <h2>Driver Location Capture</h2>
+    <p id="status" class="loading">📡 Checking location permission...</p>
+    <div id="output"></div>
+  </div>
 
   <script>
     function getLocation() {
@@ -15,11 +79,13 @@
       const output = document.getElementById("output");
 
       if (!navigator.geolocation) {
-        status.textContent = "❌ Geolocation is not supported by this browser.";
+        status.textContent = "❌ Geolocation is not supported.";
+        status.className = "error";
         return;
       }
 
       status.textContent = "📡 Requesting your location...";
+      status.className = "loading";
 
       navigator.geolocation.getCurrentPosition(
         // ✅ Success
@@ -29,24 +95,18 @@
           const accuracy = position.coords.accuracy;
 
           status.textContent = "✅ Location retrieved!";
+          status.className = "success";
+
           output.innerHTML = `
             <strong>Latitude:</strong> ${lat} <br>
             <strong>Longitude:</strong> ${lon} <br>
             <strong>Accuracy:</strong> ±${accuracy} meters
           `;
-
-          // 🚀 Example: send to server (uncomment & replace URL)
-          /*
-          fetch("https://your-server.com/update-location", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ latitude: lat, longitude: lon, accuracy: accuracy })
-          });
-          */
         },
-        // ❌ Error → refresh page immediately (all cases)
+        // ❌ Error
         (error) => {
-          location.reload();
+          status.textContent = "❌ Location error: " + error.message;
+          status.className = "error";
         },
         {
           enableHighAccuracy: true,
@@ -57,7 +117,26 @@
     }
 
     // Auto-run on page load
-    window.onload = getLocation;
+    window.onload = function () {
+      if (navigator.permissions) {
+        navigator.permissions.query({ name: "geolocation" }).then(result => {
+          if (result.state === "denied") {
+            document.getElementById("status").innerHTML = `
+              ❌ Location is blocked.<br>
+              Please enable in settings:<br><br>
+              - <b>Android (Chrome)</b>: Settings → Site settings → Location → Allow<br>
+              - <b>iOS (Safari)</b>: Settings → Safari → Location → Allow<br>
+            `;
+            document.getElementById("status").className = "error";
+          } else {
+            getLocation();
+          }
+        });
+      } else {
+        // Safari fallback
+        getLocation();
+      }
+    };
   </script>
 </body>
 </html>
